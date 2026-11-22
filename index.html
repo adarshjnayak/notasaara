@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f0f12" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <title>Notasaara — Essence of Perspective</title>
+  <style>
+    :root {
+      --bg: #0f0f12;
+      --surface: #18181d;
+      --surface-2: #222229;
+      --text: #f1f1f4;
+      --muted: #9a9aa6;
+      --accent: #f59e0b;
+      --green: #22c55e;
+      --red: #ef4444;
+      --blue: #3b82f6;
+      --border: rgba(255,255,255,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      height: 100%; width: 100%;
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+    }
+
+    /* SCREENS */
+    .screen { position: fixed; inset: 0; display: none; flex-direction: column; }
+    .screen.active { display: flex; }
+
+    /* SCREEN 1: START & STREAK HUB */
+    #start-screen {
+      padding: 24px 20px;
+      justify-content: space-between;
+      max-width: 480px; margin: 0 auto; width: 100%;
+    }
+    .top-bar-hub { display: flex; justify-content: space-between; align-items: center; }
+    .brand h1 { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; }
+    .brand span { font-size: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; }
+    .icon-btn {
+      background: var(--surface); border: 1px solid var(--border); color: var(--text);
+      padding: 8px 12px; border-radius: 10px; font-size: 13px; cursor: pointer; font-weight: 600;
+    }
+
+    .streak-card {
+      background: linear-gradient(145deg, #1b1b22, #141419);
+      border: 1px solid var(--border); border-radius: 20px; padding: 20px;
+      margin-top: 20px;
+    }
+    .streak-row { display: flex; justify-content: space-between; align-items: center; }
+    .streak-num { font-size: 32px; font-weight: 800; color: var(--accent); }
+    .streak-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    .week-strip { display: flex; justify-content: space-between; margin-top: 18px; }
+    .day-dot { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 11px; color: var(--muted); }
+    .day-circle {
+      width: 30px; height: 30px; border-radius: 50%; background: var(--surface-2);
+      display: flex; align-items: center; justify-content: center; font-size: 13px; border: 1px solid var(--border);
+    }
+    .day-circle.done { background: rgba(34,197,94,0.18); border-color: var(--green); color: var(--green); font-weight: bold; }
+
+    .hub-center { text-align: center; margin: auto 0; }
+    .meta-pill {
+      display: inline-block; background: var(--surface); border: 1px solid var(--border);
+      padding: 6px 14px; border-radius: 99px; font-size: 12px; color: var(--muted); margin-bottom: 20px;
+    }
+    .start-btn {
+      width: 100%; padding: 18px; border-radius: 16px; border: none;
+      background: var(--accent); color: #111; font-size: 17px; font-weight: 800;
+      cursor: pointer; box-shadow: 0 8px 24px rgba(245,158,11,0.25);
+    }
+    .start-btn:active { transform: scale(0.98); }
+    .resume-btn {
+      width: 100%; padding: 14px; border-radius: 14px; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text); font-size: 15px; font-weight: 600;
+      margin-top: 12px; cursor: pointer; display: none;
+    }
+    .hub-footer { text-align: center; font-size: 12px; color: var(--muted); }
+
+    /* SCREEN 2: VERTICAL REEL DECK */
+    #deck-screen { background: var(--bg); }
+    .deck-header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 20;
+      background: linear-gradient(to bottom, rgba(15,15,18,0.95), rgba(15,15,18,0.75), transparent);
+      padding: 12px 16px 16px; display: flex; justify-content: space-between; align-items: center;
+      max-width: 520px; margin: 0 auto;
+    }
+    .progress-track { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,0.1); z-index: 30; }
+    .progress-fill { height: 100%; background: var(--accent); width: 0%; transition: width 0.25s; }
+    .cat-pill {
+      background: rgba(24,24,29,0.9); border: 1px solid var(--border); color: var(--text);
+      padding: 6px 12px; border-radius: 99px; font-size: 12px; font-weight: 700; cursor: pointer;
+    }
+    .page-counter { font-size: 12px; color: var(--muted); font-weight: 600; background: rgba(24,24,29,0.85); padding: 6px 10px; border-radius: 99px; }
+    .home-mini { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 4px 8px; }
+
+    .reels-container {
+      height: 100vh; width: 100%; max-width: 520px; margin: 0 auto;
+      overflow-y: scroll; scroll-snap-type: y mandatory; scroll-behavior: smooth;
+    }
+    .reels-container::-webkit-scrollbar { display: none; }
+
+    .card {
+      height: 100vh; width: 100%; scroll-snap-align: start; scroll-snap-stop: always;
+      display: flex; flex-direction: column; position: relative; background: var(--bg);
+    }
+    .card-media {
+      height: 36%; width: 100%; background: var(--surface); position: relative; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .card-media img { width: 100%; height: 100%; object-fit: cover; }
+    .media-fallback {
+      width: 100%; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      background: linear-gradient(135deg, #1b1b24, #111116); color: var(--muted); padding: 20px; text-align: center;
+    }
+    .badge-row {
+      position: absolute; bottom: 10px; left: 14px; display: flex; gap: 6px; flex-wrap: wrap;
+    }
+    .badge {
+      font-size: 11px; font-weight: 700; padding: 4px 8px; border-radius: 6px;
+      background: rgba(15,15,18,0.85); backdrop-filter: blur(4px);
+    }
+    .badge.watch { background: var(--red); color: #fff; }
+    .badge.verified { color: var(--green); border: 1px solid rgba(34,197,94,0.4); }
+
+    .card-body {
+      flex: 1; padding: 18px 18px 14px; display: flex; flex-direction: column; justify-content: space-between;
+      overflow-y: auto;
+    }
+    .headline { font-size: 20px; font-weight: 800; line-height: 1.3; margin-bottom: 10px; color: #fff; }
+    .summary { font-size: 15px; line-height: 1.55; color: #d4d4dc; }
+
+    .impact-box {
+      background: var(--surface); border-left: 3px solid var(--accent);
+      border-radius: 10px; padding: 12px 14px; margin-top: 14px;
+    }
+    .impact-box.risk { border-left-color: var(--red); background: rgba(239,68,68,0.08); }
+    .impact-box.info { border-left-color: var(--blue); background: rgba(59,130,246,0.08); }
+    .impact-title { font-size: 12px; font-weight: 800; margin-bottom: 4px; color: var(--accent); }
+    .impact-box.risk .impact-title { color: #f87171; }
+    .impact-box.info .impact-title { color: #60a5fa; }
+    .impact-text { font-size: 13.5px; line-height: 1.45; color: #e4e4ec; }
+
+    .card-footer {
+      display: flex; justify-content: space-between; align-items: center;
+      padding-top: 12px; border-top: 1px solid var(--border); margin-top: 12px; font-size: 12px; color: var(--muted);
+    }
+    .footer-actions { display: flex; gap: 12px; align-items: center; }
+    .action-link { color: var(--accent); text-decoration: none; font-weight: 700; }
+    .star-btn { background: none; border: none; font-size: 18px; cursor: pointer; color: var(--muted); }
+    .star-btn.saved { color: var(--accent); }
+
+    /* COMPLETION CARD */
+    .done-card {
+      justify-content: center; align-items: center; text-align: center; padding: 30px 24px;
+    }
+    .done-emoji { font-size: 56px; margin-bottom: 14px; }
+    .done-stats {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+      padding: 16px; width: 100%; margin: 20px 0; text-align: left; font-size: 14px; line-height: 1.8;
+    }
+
+    /* MODAL (Category Jump / Bookmarks) */
+    .modal {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 50;
+      display: none; align-items: flex-end; justify-content: center;
+    }
+    .modal.open { display: flex; }
+    .modal-sheet {
+      background: var(--surface); width: 100%; max-width: 520px; border-radius: 20px 20px 0 0;
+      padding: 20px; max-height: 75vh; overflow-y: auto;
+    }
+    .modal-title { font-size: 16px; font-weight: 800; margin-bottom: 14px; display: flex; justify-content: space-between; }
+    .jump-item {
+      padding: 12px 14px; background: var(--surface-2); border-radius: 12px; margin-bottom: 8px;
+      display: flex; justify-content: space-between; cursor: pointer; font-size: 14px; font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SCREEN 1: START & STREAK HUB -->
+  <div id="start-screen" class="screen active">
+    <div class="top-bar-hub">
+      <div class="brand">
+        <h1>Notasaara</h1>
+        <span>Essence of Perspective</span>
+      </div>
+      <button class="icon-btn" onclick="openBookmarks()">⭐ Saved</button>
+    </div>
+
+    <div class="streak-card">
+      <div class="streak-row">
+        <div>
+          <div class="streak-num" id="streak-count">🔥 0 Days</div>
+          <div class="streak-sub" id="streak-best">Best: 0 days • 1 rest day/week included</div>
+        </div>
+      </div>
+      <div class="week-strip" id="week-strip"></div>
+    </div>
+
+    <div class="hub-center">
+      <div class="meta-pill" id="briefing-meta">Loading today's briefing...</div>
+      <button class="start-btn" id="start-btn" onclick="startDeck(0)">Start Briefing</button>
+      <button class="resume-btn" id="resume-btn" onclick="resumeDeck()">Resume Briefing</button>
+    </div>
+
+    <div class="hub-footer">
+      Kundapura • Coastal Karnataka • Trade • India • World
+    </div>
+  </div>
+
+  <!-- SCREEN 2: INSHORTS VERTICAL DECK -->
+  <div id="deck-screen" class="screen">
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="deck-header">
+      <div style="display:flex; align-items:center; gap:6px;">
+        <button class="home-mini" onclick="goHome()">←</button>
+        <button class="cat-pill" id="top-cat" onclick="openJumpMenu()">📍 Local</button>
+      </div>
+      <div class="page-counter" id="page-counter">Page 1 of 1</div>
+    </div>
+    <div class="reels-container" id="reels-container"></div>
+  </div>
+
+  <!-- MODAL FOR CATEGORY JUMP & SAVED -->
+  <div id="modal" class="modal" onclick="if(event.target===this) closeModal()">
+    <div class="modal-sheet">
+      <div class="modal-title">
+        <span id="modal-heading">Jump to Category</span>
+        <span style="cursor:pointer; color:var(--muted)" onclick="closeModal()">✕</span>
+      </div>
+      <div id="modal-body"></div>
+    </div>
+  </div>
+
+  <script>
+    let briefingData = null;
+    let cards = [];
+    let currentIndex = 0;
+
+    const CAT_ICONS = {
+      "Local": "📍 Local",
+      "People & Risk": "🕵️ People & Risk",
+      "Building & Trade": "🧱 Building & Trade",
+      "India & Economy": "🇮🇳 India & Economy",
+      "World & Tech": "🌍 World & Tech"
+    };
+
+    // --- STREAK LOGIC (with 1-day weekly grace) ---
+    function getTodayStr() { return new Date().toISOString().slice(0, 10); }
+    function loadStreak() {
+      const s = JSON.parse(localStorage.getItem("notasaara_streak") || '{"count":0,"best":0,"lastDate":"","history":[]}');
+      document.getElementById("streak-count").textContent = `🔥 ${s.count} Day${s.count === 1 ? '' : 's'}`;
+      document.getElementById("streak-best").textContent = `Best: ${s.best} days • Total: ${s.history.length} briefings`;
+
+      // Render 7-day strip
+      const strip = document.getElementById("week-strip");
+      strip.innerHTML = "";
+      const days = ["S","M","T","W","T","F","S"];
+      for (let i = 6; i >= 0; i--) {
+        const d = new Date(); d.setDate(d.getDate() - i);
+        const iso = d.toISOString().slice(0, 10);
+        const done = s.history.includes(iso);
+        strip.innerHTML += `<div class="day-dot"><div class="day-circle ${done ? 'done' : ''}">${done ? '✓' : ''}</div><span>${days[d.getDay()]}</span></div>`;
+      }
+    }
+
+    function completeTodayStreak() {
+      const today = getTodayStr();
+      const s = JSON.parse(localStorage.getItem("notasaara_streak") || '{"count":0,"best":0,"lastDate":"","history":[]}');
+      if (s.lastDate !== today) {
+        if (s.lastDate) {
+          const diffDays = Math.round((new Date(today) - new Date(s.lastDate)) / 86400000);
+          s.count = (diffDays <= 2) ? s.count + 1 : 1; // Allows 1 rest day without breaking streak
+        } else {
+          s.count = 1;
+        }
+        s.best = Math.max(s.best, s.count);
+        s.lastDate = today;
+        if (!s.history.includes(today)) s.history.push(today);
+        localStorage.setItem("notasaara_streak", JSON.stringify(s));
+      }
+      localStorage.removeItem("notasaara_last_idx");
+      loadStreak();
+      goHome();
+    }
+
+    // --- BOOKMARKS ---
+    function getBookmarks() { return JSON.parse(localStorage.getItem("notasaara_saved") || "[]"); }
+    function toggleBookmark(idx, btn) {
+      const card = cards[idx];
+      let saved = getBookmarks();
+      const exists = saved.findIndex(c => c.headline === card.headline);
+      if (exists >= 0) { saved.splice(exists, 1); btn.classList.remove("saved"); btn.textContent = "☆"; }
+      else { saved.unshift(card); btn.classList.add("saved"); btn.textContent = "★"; }
+      localStorage.setItem("notasaara_saved", JSON.stringify(saved));
+    }
+
+    function openBookmarks() {
+      const saved = getBookmarks();
+      document.getElementById("modal-heading").textContent = `⭐ Saved Stories (${saved.length})`;
+      const body = document.getElementById("modal-body");
+      if (!saved.length) {
+        body.innerHTML = `<p style="color:var(--muted); font-size:14px;">No saved stories yet. Tap the ☆ star on any news card to save it here.</p>`;
+      } else {
+        body.innerHTML = saved.map(c => `
+          <div class="jump-item" style="flex-direction:column; gap:6px;" onclick="window.open('${c.link}','_blank')">
+            <span style="font-size:11px; color:var(--accent)">${CAT_ICONS[c.category] || c.category} • ${c.source}</span>
+            <span>${c.headline}</span>
+          </div>`).join("");
+      }
+      document.getElementById("modal").classList.add("open");
+    }
+
+    // --- LOAD BRIEFING ---
+    async function init() {
+      loadStreak();
+      try {
+        const res = await fetch(`briefing.json?t=${Date.now()}`);
+        briefingData = await res.json();
+        cards = briefingData.cards || [];
+        document.getElementById("briefing-meta").textContent =
+          `Updated: ${briefingData.updated_at} • ${cards.length} stories shortlisted from ${briefingData.total_scanned}`;
+
+        const savedIdx = parseInt(localStorage.getItem("notasaara_last_idx") || "0", 10);
+        if (savedIdx > 0 && savedIdx < cards.length) {
+          const rBtn = document.getElementById("resume-btn");
+          rBtn.style.display = "block";
+          rBtn.textContent = `Resume Briefing (Page ${savedIdx + 1} of ${cards.length})`;
+        }
+        renderDeck();
+      } catch (e) {
+        document.getElementById("briefing-meta").textContent = "Could not load briefing.json yet.";
+      }
+    }
+
+    function renderDeck() {
+      const container = document.getElementById("reels-container");
+      const saved = getBookmarks();
+      container.innerHTML = cards.map((c, i) => {
+        const isSaved = saved.some(s => s.headline === c.headline);
+        const impactClass = c.impact_label?.includes("Risk") ? "risk" : (c.impact_label?.includes("Why") ? "info" : "");
+        const imgHtml = c.image
+          ? `<img src="${c.image}" alt="" onerror="this.outerHTML='<div class=media-fallback><strong>${c.source}</strong><span>Notasaara Briefing</span></div>'" />`
+          : `<div class="media-fallback"><strong>${c.source}</strong><span>Notasaara Briefing</span></div>`;
+        return `
+          <section class="card" data-idx="${i}">
+            <div class="card-media">
+              ${imgHtml}
+              <div class="badge-row">
+                ${c.watchlist_match ? `<span class="badge watch">⚠️ WATCHLIST MATCH</span>` : ``}
+                ${c.verified ? `<span class="badge verified">✅ Confirmed (2+ Sources)</span>` : `<span class="badge">Single Source</span>`}
+              </div>
+            </div>
+            <div class="card-body">
+              <div>
+                <h2 class="headline">${c.headline}</h2>
+                <p class="summary">${c.body}</p>
+                <div class="impact-box ${impactClass}">
+                  <div class="impact-title">${c.impact_label || '📌 Impact'}</div>
+                  <div class="impact-text">${c.impact_text || ''}</div>
+                </div>
+              </div>
+              <div class="card-footer">
+                <span>${c.source}</span>
+                <div class="footer-actions">
+                  <button class="star-btn ${isSaved ? 'saved' : ''}" onclick="toggleBookmark(${i}, this)">${isSaved ? '★' : '☆'}</button>
+                  <a class="action-link" href="${c.link}" target="_blank" rel="noopener">Read Full →</a>
+                </div>
+              </div>
+            </div>
+          </section>`;
+      }).join("");
+
+      // Add Final Completion Card
+      const counts = {};
+      cards.forEach(c => counts[c.category] = (counts[c.category] || 0) + 1);
+      const breakdown = Object.entries(counts).map(([k,v]) => `<div>${CAT_ICONS[k] || k}: <strong>${v} stories</strong></div>`).join("");
+      container.innerHTML += `
+        <section class="card done-card" data-idx="${cards.length}">
+          <div class="done-emoji">🎯</div>
+          <h2 class="headline">You're Caught Up for Today!</h2>
+          <p class="summary">You finished all ${cards.length} shortlisted stories.</p>
+          <div class="done-stats">${breakdown}</div>
+          <button class="start-btn" onclick="completeTodayStreak()">Complete Briefing (+1 Streak 🔥)</button>
+        </section>`;
+
+      container.addEventListener("scroll", onDeckScroll);
+    }
+
+    function onDeckScroll() {
+      const container = document.getElementById("reels-container");
+      const idx = Math.round(container.scrollTop / window.innerHeight);
+      if (idx !== currentIndex) {
+        currentIndex = idx;
+        updateHeader(idx);
+        if (idx < cards.length) localStorage.setItem("notasaara_last_idx", idx);
+      }
+    }
+
+    function updateHeader(idx) {
+      const fill = document.getElementById("progress-fill");
+      const counter = document.getElementById("page-counter");
+      const cat = document.getElementById("top-cat");
+      if (idx >= cards.length) {
+        fill.style.width = "100%";
+        counter.textContent = "All Caught Up ✓";
+        cat.textContent = "🎯 Done";
+        return;
+      }
+      const left = cards.length - (idx + 1);
+      fill.style.width = `${((idx + 1) / cards.length) * 100}%`;
+      counter.textContent = `Page ${idx + 1} of ${cards.length} • ${left} left`;
+      cat.textContent = CAT_ICONS[cards[idx].category] || cards[idx].category;
+    }
+
+    function startDeck(idx) {
+      if (!cards.length) return;
+      document.getElementById("start-screen").classList.remove("active");
+      document.getElementById("deck-screen").classList.add("active");
+      const container = document.getElementById("reels-container");
+      container.scrollTo({ top: idx * window.innerHeight, behavior: "instant" });
+      currentIndex = idx;
+      updateHeader(idx);
+    }
+
+    function resumeDeck() {
+      const savedIdx = parseInt(localStorage.getItem("notasaara_last_idx") || "0", 10);
+      startDeck(savedIdx);
+    }
+
+    function goHome() {
+      document.getElementById("deck-screen").classList.remove("active");
+      document.getElementById("start-screen").classList.add("active");
+    }
+
+    function openJumpMenu() {
+      document.getElementById("modal-heading").textContent = "Jump to Category";
+      const seen = {};
+      cards.forEach((c, i) => { if (!(c.category in seen)) seen[c.category] = i; });
+      document.getElementById("modal-body").innerHTML = Object.entries(seen).map(([cat, idx]) => `
+        <div class="jump-item" onclick="closeModal(); startDeck(${idx});">
+          <span>${CAT_ICONS[cat] || cat}</span>
+          <span style="color:var(--muted)">Page ${idx + 1} →</span>
+        </div>`).join("");
+      document.getElementById("modal").classList.add("open");
+    }
+
+    function closeModal() { document.getElementById("modal").classList.remove("open"); }
+
+    init();
+  </script>
+</body>
+</html>
