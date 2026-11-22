@@ -1,0 +1,33 @@
+name: Notasaara Daily Briefing
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Runs daily at 5:30 AM IST
+  workflow_dispatch:    # Lets you run it manually anytime
+
+jobs:
+  build-briefing:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run Notasaara Scraper
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python scraper.py
+
+      - name: Save briefing.json
+        run: |
+          git config --global user.name "Notasaara Bot"
+          git config --global user.email "bot@notasaara.local"
+          git add briefing.json
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Update daily briefing" && git push)
