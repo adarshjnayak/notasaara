@@ -1,6 +1,5 @@
 import os
 import json
-import time
 import feedparser
 import requests
 from bs4 import BeautifulSoup
@@ -79,7 +78,7 @@ def fetch_articles():
     return articles
 
 def curate_with_gemini(articles):
-    """Uses Gemini Flash to score, translate Kannada->English, deduplicate, and write cards."""
+    """Uses Gemini 3.8 Flash to score, translate Kannada->English, deduplicate, and write cards."""
     client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
     # Send up to 80 freshest/watchlist-prioritized articles to stay fast & within free limits
@@ -116,11 +115,10 @@ NEWS ITEMS:
 """
 
     response = client.models.generate_content(
-        model="gemini-2.5-flash",
+        model="gemini-3.8-flash",
         contents=prompt,
         config=types.GenerateContentConfig(
-            response_mime_type="application/json",
-            temperature=0.2
+            response_mime_type="application/json"
         )
     )
 
